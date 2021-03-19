@@ -1,51 +1,69 @@
----
-title: "Spain Mortality Data Download"
-author: "Angelo Santana"
-date: "2021/03/19"
-output: rmarkdown::github_document
----
+Spain Mortality Data Download
+================
+Angelo Santana
+2021/03/19
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval=FALSE)
-library(readxl)
-library(tidyverse)
-```
+ 
 
-\  
+This file implements the code necessary for downloading the population
+data of Spain during the years 2008-2019 grouped by sex, age and
+autonomous community.
 
-This file implements the code necessary for downloading the population data of Spain during the years 2008-2019 grouped by sex, age and autonomous community.
-
-\  
+ 
 
 # Data source
 
 ## Mortality data until 2019
 
-Mortality data of Spain can be downloaded from the [Spanish Statistical Office INE (_Instituto Nacional de Estadística_)](https://www.ine.es/en/) in the section [Demography and population > Demographic Phenomena > Death Statistics. Vital statistics. Results](https://www.ine.es/dyngs/INEbase/en/operacion.htm?c=Estadistica_C&cid=1254736177008&menu=resultados&idp=1254735573002). As stated in this web page:
+Mortality data of Spain can be downloaded from the [Spanish Statistical
+Office INE (*Instituto Nacional de
+Estadística*)](https://www.ine.es/en/) in the section [Demography and
+population &gt; Demographic Phenomena &gt; Death Statistics. Vital
+statistics.
+Results](https://www.ine.es/dyngs/INEbase/en/operacion.htm?c=Estadistica_C&cid=1254736177008&menu=resultados&idp=1254735573002).
+As stated in this web page:
 
->> Death Statistics have been prepared since 1858 and constitute one of the most traditional works in the INE. It collects data on deaths occurring in Spain, as well as the socio-demographic characteristics of the deceased.
+> > Death Statistics have been prepared since 1858 and constitute one of
+> > the most traditional works in the INE. It collects data on deaths
+> > occurring in Spain, as well as the socio-demographic characteristics
+> > of the deceased.
 
-INE does not offer the possibility of directly download tables with the number of deaths by autonomous community, sex and age. To this aim it is necessary to download microdata files and build necessary tables from them.
+INE does not offer the possibility of directly download tables with the
+number of deaths by autonomous community, sex and age. To this aim it is
+necessary to download microdata files and build necessary tables from
+them.
 
-Microdata files can be downloaded from [this link](https://www.ine.es/dyngs/INEbase/en/operacion.htm?c=Estadistica_C&cid=1254736177008&menu=resultados&idp=1254735573002#!tabs-1254736195450). There is a microdata file per year. The structure of the data in each file depends on the year. Register design and valid variable values are specified in excel files which can be downloaded from that page in the following links:
+Microdata files can be downloaded from [this
+link](https://www.ine.es/dyngs/INEbase/en/operacion.htm?c=Estadistica_C&cid=1254736177008&menu=resultados&idp=1254735573002#!tabs-1254736195450).
+There is a microdata file per year. The structure of the data in each
+file depends on the year. Register design and valid variable values are
+specified in excel files which can be downloaded from that page in the
+following links:
 
-* [Years 1980-1998](ftp://www.ine.es/temas/mnp_defun/diseno_defun_80-98.zip)
+-   [Years
+    1980-1998](ftp://www.ine.es/temas/mnp_defun/diseno_defun_80-98.zip)
 
-* [Years 1999-2008](ftp://www.ine.es/temas/mnp_defun/diseno_defun_99.zip)
+-   [Years
+    1999-2008](ftp://www.ine.es/temas/mnp_defun/diseno_defun_99.zip)
 
-* [Years 2009-2011](ftp://www.ine.es/temas/mnp_defun/disreg_defun15.zip)  
+-   [Years
+    2009-2011](ftp://www.ine.es/temas/mnp_defun/disreg_defun15.zip)
 
-* [Years 2012 onwards](ftp://www.ine.es/temas/mnp_defun/disreg_defunedu.zip)
+-   [Years 2012
+    onwards](ftp://www.ine.es/temas/mnp_defun/disreg_defunedu.zip)
 
-\  
+ 
 
-We have extracted the relevant information of these files in the following files which can be found in this repository: `dise12_19.xlsx`, `dise09_11.xlsx`, `dise99_08.xlsx`, `dise80_98.xlsx`.
+We have extracted the relevant information of these files in the
+following files which can be found in this repository: `dise12_19.xlsx`,
+`dise09_11.xlsx`, `dise99_08.xlsx`, `dise80_98.xlsx`.
 
-\  
+ 
 
-The following code allows for direct download of the microdata files via ftp from the INE:
+The following code allows for direct download of the microdata files via
+ftp from the INE:
 
-```{r}
+``` r
 require(RCurl)
 for (k in 12:19) download.file(paste("ftp://www.ine.es/temas/mnp_defun/datos_20",k,".zip",sep=""), 
                              destfile = paste("microdata/datos_20",k,".zip",sep=""))
@@ -59,11 +77,13 @@ for (k in 80:99) download.file(paste("ftp://www.ine.es/temas/mnp_defun/datos def
                              destfile = paste("microdata/datos_19",k,".zip",sep=""))
 ```
 
-\  
+ 
 
-Now we read the register design files and define a function which uses the adequate register file for reading mortality data in each one of the previous zip files:
+Now we read the register design files and define a function which uses
+the adequate register file for reading mortality data in each one of the
+previous zip files:
 
-```{r}
+``` r
 dise12_19 <- read_excel("microdata/dise12_19.xlsx") %>% 
   filter(!is.na(Variable)) %>% 
   filter(!is.na(Inic.))
@@ -102,12 +122,13 @@ leeMicrodata <- function(año,dise){
     mutate(año=año) %>% 
     select(año,everything())
 }
-
 ```
 
-Finally we use the previous register files and function for reading microdata files and merge the data in a single data.frame which accounts for the mortality by year, autonomous community, age group and sex.
+Finally we use the previous register files and function for reading
+microdata files and merge the data in a single data.frame which accounts
+for the mortality by year, autonomous community, age group and sex.
 
-```{r}
+``` r
 defun <- NULL
 for (a in 2019:2012) defun <- bind_rows(defun,leeMicrodata(a,dise12_19))
 for (a in 2011:2009) defun <- bind_rows(defun,leeMicrodata(a,dise09_11))
@@ -121,19 +142,32 @@ deaths80_19 <- defun %>%
 save(deaths80_19,file="rdata/deaths80_19.rdata")
 ```
 
-\  
+ 
 
-\  
+ 
 
 ## Mortality data in 2020
 
-The process of obtaining mortality data is complex, so the official values are normally published one year late. Definitive official values of mortality in 2020 will be published in january 2022. Fortunately, the Spanish Office of Statistics (INE) publishes provisional values in the section [Weekly death estimates (EDeS) during the covid-19 outbreak](https://www.ine.es/en/experimental/defunciones/experimental_defunciones.htm). As stated in this page:
+The process of obtaining mortality data is complex, so the official
+values are normally published one year late. Definitive official values
+of mortality in 2020 will be published in january 2022. Fortunately, the
+Spanish Office of Statistics (INE) publishes provisional values in the
+section [Weekly death estimates (EDeS) during the covid-19
+outbreak](https://www.ine.es/en/experimental/defunciones/experimental_defunciones.htm).
+As stated in this page:
 
->> The EDeS project aims to carry out a weekly study of deaths occurring during the covid-19 pandemic, and to compare this with the historical data on deaths since the year 2000. This will allow us to interpret the data using a necessary historical perspective, given the variability in deaths over time.
+> > The EDeS project aims to carry out a weekly study of deaths
+> > occurring during the covid-19 pandemic, and to compare this with the
+> > historical data on deaths since the year 2000. This will allow us to
+> > interpret the data using a necessary historical perspective, given
+> > the variability in deaths over time.
 
-Weekly and accumulated deaths by sex and autonomous community in 2019-2021 can be downloaded from [this link](https://www.ine.es/jaxiT3/Tabla.htm?t=35179) in that web page. The following code downloads the data directly to a data.frame:
+Weekly and accumulated deaths by sex and autonomous community in
+2019-2021 can be downloaded from [this
+link](https://www.ine.es/jaxiT3/Tabla.htm?t=35179) in that web page. The
+following code downloads the data directly to a data.frame:
 
-```{r}
+``` r
 # First create a data.frame with the age groups that allows for recoding ages in the mortality data file
 edades <- tibble(e1=seq(0,90,by=5), e2=seq(4,94,by=5)) %>% 
   mutate(claseEdad=(e1+e2)/2,
@@ -217,15 +251,14 @@ deaths2020A2 <-
   filter(deaths2020A2,año==2020) %>% 
   mutate(numDefun=round(nDef)) %>% 
   select(año,mes,codigoCA,ca,sexo,grEdad,numDefun)
-
 ```
-
 
 ## Complete mortality data 1980-2020
 
-Finally we join mortality data until 2019 (definitive official data) with 2020 (provisional) data.
+Finally we join mortality data until 2019 (definitive official data)
+with 2020 (provisional) data.
 
-```{r}
+``` r
 deaths80_19 <- deaths80_19 %>% 
   mutate(sexo=as.character(sexo))
 
@@ -238,5 +271,3 @@ deaths80_20A2 <- bind_rows(deaths80_19,deaths2020A2) %>%
 
 save(deaths80_20A1,deaths80_20A2,file="rdata/deaths80_20.rdata")
 ```
-
-

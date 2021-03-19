@@ -1,21 +1,21 @@
----
-title: "Merging death and population data"
-author: "Angelo Santana"
-date: "2021/03/19"
-output: rmarkdown::github_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval=FALSE)
-library(tidyverse)
-```
-
+Merging death and population data
+================
+Angelo Santana
+2021/03/19
 
 ## Merge population and death datasets
 
-We have two files, one with population and other with death data downloaded from the Spanish Statistical Office (INE). Original data have been cleaned and organized by year, autonomous community, sex and age group. Here we merge both datasets. For each autonomous community, age group, sex and month, number of deaths is presented paired with the population size in that group in the reference month. For months January to June of any year, the reference population is the one that the INE calculates for January of that year, and for July to December the reference population is the calculated for July.
+We have two files, one with population and other with death data
+downloaded from the Spanish Statistical Office (INE). Original data have
+been cleaned and organized by year, autonomous community, sex and age
+group. Here we merge both datasets. For each autonomous community, age
+group, sex and month, number of deaths is presented paired with the
+population size in that group in the reference month. For months January
+to June of any year, the reference population is the one that the INE
+calculates for January of that year, and for July to December the
+reference population is the calculated for July.
 
-```{r}
+``` r
 load("rdata/population7120.rdata") # Population data from 1971 to 2020
 load("rdata/deaths80_20.rdata")    # Death data from 1980 to 2020
 
@@ -38,15 +38,16 @@ deathPop8020A2 <- deaths80_20A2 %>%
 save(deathPop8020A1,deathPop8020A2,file="rdata/deathPop8020.rdata")
 ```
 
-
-
 ## Mortality during the periodo March 1st - June 30 from 2008 to 2020
 
-For our analysis we use data of the four-months periods from March 1st - June 30 in the years 2008 to 2020.
+For our analysis we use data of the four-months periods from March 1st -
+June 30 in the years 2008 to 2020.
 
-The following code extracts data of those periods and rename variables. Until now we have used Spanish names for the variables as they came in the INE files, and here we simply translate them into English:
+The following code extracts data of those periods and rename variables.
+Until now we have used Spanish names for the variables as they came in
+the INE files, and here we simply translate them into English:
 
-```{r}
+``` r
 dbPop <- population7120 %>% 
   filter(año>=2008&mesReferencia==1) %>% 
   select(año,ca,codigoCA,sexo,grEdad,poblacion)
@@ -90,8 +91,12 @@ dbA2 <- full_join(dbPop,dbDeathA2) %>%
 save(db,file="rdata/db.rdata")
 ```
 
-Although the only difference between datasets dbA1 and dbA2 is the way in which deaths have been assigned to months from the weekly data provided by the INE, the total number of deaths in the first six months of 2020 is 261804 people in the file dbA1 and 261555 people in dbA2 (difference of 249 people). In a [latest press release published in 2021/01/26 (in spanish)](https://www.ine.es/prensa/mnp_1s2020_p.pdf) the INE estimates in 262373 the total number of deaths in the first semester of 2020. For that reason we have used our first approximation to 2020 monthly data, as it gives a value closer to that provided by the INE.
-
-
-
-
+Although the only difference between datasets dbA1 and dbA2 is the way
+in which deaths have been assigned to months from the weekly data
+provided by the INE, the total number of deaths in the first six months
+of 2020 is 261804 people in the file dbA1 and 261555 people in dbA2
+(difference of 249 people). In a [latest press release published in
+2021/01/26 (in spanish)](https://www.ine.es/prensa/mnp_1s2020_p.pdf) the
+INE estimates in 262373 the total number of deaths in the first semester
+of 2020. For that reason we have used our first approximation to 2020
+monthly data, as it gives a value closer to that provided by the INE.
