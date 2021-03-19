@@ -181,12 +181,10 @@ week2020Deaths <- deathData %>%
 # death number each week to assign the corresponding number of deaths to month
 
 # Approx 1: each week is assigned to the month in which there are more days:
-monthDeaths2020A1 <- week2020Deaths %>% 
+deaths2020A1 <- week2020Deaths %>% 
   group_by(año,mes,codigoCA,ca,sexo,grEdad) %>% 
   summarize(numDefun=sum(numDefun)) %>% 
   ungroup() 
-
-save(monthDeaths2020A1,file="rdata/monthDeaths2020A1.rdata")
 
 # Approx 2: Assign number of deaths proportionally to the number of days of
 # month that fall inside each week
@@ -194,7 +192,8 @@ save(monthDeaths2020A1,file="rdata/monthDeaths2020A1.rdata")
 week2020Deaths <- week2020Deaths %>% 
   mutate(date1=ISOweek::ISOweek2date(paste(gsub("SM","-W",periodo),1,sep="-")),
          date7=ISOweek::ISOweek2date(paste(gsub("SM","-W",periodo),7,sep="-"))) %>% 
-  arrange(fecha,ca,grEdad,sexo)
+  arrange(fecha,ca,grEdad,sexo) %>% 
+  select(-c(año,mes,fecha,periodo))
 
 # The following function computes how many days of the same week fall in two
 # different months and distribute the number of deaths proportionally:
@@ -211,29 +210,31 @@ ndd <- function(date1,date7,numDefun,...){
 }
 
 # Apply this function to weekly mortality data
-monthDeaths2020A2 <- pmap_dfr(week2020Deaths,ndd)
-save(monthDeaths2020A2,file="monthDeaths2020A2.rdata")
+deaths2020A2 <- pmap_dfr(week2020Deaths,ndd)
+deaths2020A2 <- 
+  filter(deaths2020A2,año==2020) %>% 
+  mutate(numDefun=round(nDef)) %>% 
+  select(año,mes,codigoCA,ca,sexo,grEdad,numDefun)
+
 ```
 
 
-# Datos de mortalidad 1980-2020
+## Complete mortality data 1980-2020
 
-Por último, combino los datos de mortalidad desde 1980 hasta 2021 (los datos de 2020 y 2021 se han obtenido a partir de los datos semanales y son provisionales)
+Finally we join mortality data until 2019 (definitive official data) with 2020 (provisional) data.
 
 ```{r}
-defunciones80_19 <- defunciones80_19 %>% 
+deaths80_19 <- deaths80_19 %>% 
   mutate(sexo=as.character(sexo))
-morta2021Mes <- morta1921Mes %>% filter(año>2019)
-defunciones80_21 <- bind_rows(defunciones80_19,morta2021Mes) %>% 
+
+deaths80_20A1 <- bind_rows(deaths80_19,deaths2020A1) %>% 
   arrange(año,mes,ca)
-save(defunciones80_21,file="rdata/defunciones80_21.rdata")
-```
+
+deaths80_20A2 <- bind_rows(deaths80_19,deaths2020A2) %>% 
+  arrange(año,mes,ca)
 
 
-```{r}
-porMes <- defunciones80_21 %>% group_by(año,mes) %>% 
-  summarize(numDefun=sum(numDefun)) %>% 
-  mutate(fecha=as.Date(paste(año,mes,15,sep="-")))
-ggplot(porMes,aes(x=fecha,y=numDefun)) + geom_line()
+save(deaths80_20A1,deaths80_20A2,file="rdata/deaths80_20.rdata")
 ```
+
 
