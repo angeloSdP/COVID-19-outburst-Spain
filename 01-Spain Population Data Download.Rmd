@@ -10,6 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
 
+\  
+
 This file implements the code necessary for downloading the population data of Spain during the years 2008-2019 grouped by sex, age and autonomous community.
 
 \  
@@ -28,7 +30,7 @@ Data can be downloaded in several formats (excel, csv, PC-Axis, Json or plain te
 
 \  
 
-## Population data downloading and tidying 
+# Population data downloading and tidying 
 
 Direct access to data in Pc-Axis format is through the link [https://www.ine.es/jaxiT3/files/t/es/px/10262.px]:
 
