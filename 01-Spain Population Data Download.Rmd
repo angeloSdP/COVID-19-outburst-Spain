@@ -38,7 +38,7 @@ Direct access to data in Pc-Axis format is through the link [https://www.ine.es/
 data <- pxR::read.px("https://www.ine.es/jaxiT3/files/t/es/px/10262.px")
 ```
 
-The following code reads the data and prepares it in a tidy format for further processing with R:
+The following code reads the data and prepares it in a tidy format for further processing with R. For each year we have the population size by autonomous community, sex and age group, evaluated in the months of January and July:
 
 ```{r}
 # Codes and names of Autonomous Communities in several languages
