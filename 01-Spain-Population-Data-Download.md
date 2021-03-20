@@ -50,7 +50,7 @@ format.
 # Population data downloading and tidying
 
 Direct access to data in Pc-Axis format is through the link
-\[<https://www.ine.es/jaxiT3/files/t/es/px/10262.px>\]:
+<https://www.ine.es/jaxiT3/files/t/es/px/10262.px>:
 
 ``` r
 data <- pxR::read.px("https://www.ine.es/jaxiT3/files/t/es/px/10262.px")

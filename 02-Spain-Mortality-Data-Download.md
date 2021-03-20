@@ -5,9 +5,9 @@ Angelo Santana
 
  
 
-This file implements the code necessary for downloading the population
-data of Spain during the years 2008-2019 grouped by sex, age and
-autonomous community.
+This file implements the code necessary for downloading mortality data
+of Spain during the years 2008-2019 grouped by sex, age and autonomous
+community.
 
  
 
@@ -37,20 +37,20 @@ Microdata files can be downloaded from [this
 link](https://www.ine.es/dyngs/INEbase/en/operacion.htm?c=Estadistica_C&cid=1254736177008&menu=resultados&idp=1254735573002#!tabs-1254736195450).
 There is a microdata file per year. The structure of the data in each
 file depends on the year. Register design and valid variable values are
-specified in excel files which can be downloaded from that page in the
-following links:
+specified in excel files which can be downloaded by ftp from that page
+in the following links:
 
--   [Years
-    1980-1998](ftp://www.ine.es/temas/mnp_defun/diseno_defun_80-98.zip)
+-   Years 1980-1998:
+    <ftp://www.ine.es/temas/mnp_defun/diseno_defun_80-98.zip>
 
--   [Years
-    1999-2008](ftp://www.ine.es/temas/mnp_defun/diseno_defun_99.zip)
+-   Years 1999-2008:
+    <ftp://www.ine.es/temas/mnp_defun/diseno_defun_99.zip>
 
--   [Years
-    2009-2011](ftp://www.ine.es/temas/mnp_defun/disreg_defun15.zip)
+-   Years 2009-2011:
+    <ftp://www.ine.es/temas/mnp_defun/disreg_defun15.zip>
 
--   [Years 2012
-    onwards](ftp://www.ine.es/temas/mnp_defun/disreg_defunedu.zip)
+-   Years 2012 onwards:
+    <ftp://www.ine.es/temas/mnp_defun/disreg_defunedu.zip>
 
  
 
@@ -165,7 +165,7 @@ As stated in this page:
 Weekly and accumulated deaths by sex and autonomous community in
 2019-2021 can be downloaded from [this
 link](https://www.ine.es/jaxiT3/Tabla.htm?t=35179) in that web page. The
-following code downloads the data directly to a data.frame:
+following code downloads the data of year 2020 directly to a data.frame:
 
 ``` r
 # First create a data.frame with the age groups that allows for recoding ages in the mortality data file
@@ -212,9 +212,10 @@ week2020Deaths <- deathData %>%
   filter(!is.na(grEdad)&año==2020) %>% 
   ungroup() 
 
-# Group data by month. We can follow two approximations: assign each week to the 
-# month in which there are more days, or made a simple interpolation of the daily
-# death number each week to assign the corresponding number of deaths to month
+# Group data by month. As INE does not provide data by month, we can follow two 
+# approximations: assign number of deaths in a week to the month in which the 
+# week has more days, or assign number of deaths to each month proportionally to 
+# the number of days of each week into that month.
 
 # Approx 1: each week is assigned to the month in which there are more days:
 deaths2020A1 <- week2020Deaths %>% 
