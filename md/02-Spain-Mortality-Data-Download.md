@@ -1,6 +1,5 @@
 Spain Mortality Data Download
 ================
-Angelo Santana
 2021/03/19
 
  

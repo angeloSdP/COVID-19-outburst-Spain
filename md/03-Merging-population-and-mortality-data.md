@@ -1,6 +1,5 @@
 Merging death and population data
 ================
-Angelo Santana
 2021/03/19
 
 ## Merge population and death datasets

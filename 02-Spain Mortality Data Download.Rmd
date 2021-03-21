@@ -1,6 +1,5 @@
 ---
 title: "Spain Mortality Data Download"
-author: "Angelo Santana"
 date: "2021/03/19"
 output: rmarkdown::github_document
 ---
