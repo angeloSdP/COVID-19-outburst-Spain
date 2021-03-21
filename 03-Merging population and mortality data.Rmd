@@ -93,5 +93,44 @@ save(db,file="rdata/db.rdata")
 Although the only difference between datasets dbA1 and dbA2 is the way in which deaths have been assigned to months from the weekly data provided by the INE, the total number of deaths in the first six months of 2020 is 261804 people in the file dbA1 and 261562 people in dbA2 (difference of 242 people). In a [latest press release published in 2021/01/26 (in spanish)](https://www.ine.es/prensa/mnp_1s2020_p.pdf) the INE estimates in 262373 the total number of deaths in the first semester of 2020. For that reason we have used our first approximation to 2020 monthly data, as it gives a value closer to that provided by the INE.
 
 
+\  
+
+\  
+
+
+## Mortality during the period July 1st - December 31 from 2008 to 2020
+
+The second wave of the COVID-19 epidemic took place during the second half of the year 2020. The following code extracts data of the period July 1st - December 31 from the year 2008 to 2020.
+
+```{r}
+dbPop <- population7120 %>% 
+  filter(año>=2008&mesReferencia==7) %>% 
+  select(año,ca,codigoCA,sexo,grEdad,poblacion)
+
+# Dataset deaths2020A1 contains provisional data for 2020 with monthly number of 
+# deaths calculated from weekly deaths by assigning all data of a week to the month 
+# in which that week has more days:
+dbDeathA1 <- bind_rows(deaths80_19,deaths2020A1) %>% 
+  filter(año>=2008&mes>=7) %>% 
+  group_by(año,ca,codigoCA,sexo,grEdad) %>% 
+  summarize(numDefun=sum(numDefun)) %>% 
+  ungroup()
+
+db2 <- full_join(dbPop,dbDeathA1) %>% 
+  mutate(poblacion=round(poblacion)) %>% 
+  rename(Year=año,CA=codigoCA,death=numDefun,pop=poblacion) %>% 
+  mutate(Age=factor(grEdad),
+         Male=ifelse(sexo=="Hombres",1,0)) %>% 
+  select(-c(ca,sexo,grEdad)) %>% 
+  select(Year,CA,Male,Age,death,pop) %>% 
+  arrange(Year,CA,Male,Age)
+
+
+save(db2,file="rdata/db2ndWave.rdata")
+```
+
+
+
+
 
 
