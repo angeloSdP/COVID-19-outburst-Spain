@@ -115,7 +115,8 @@ for (a in 1998:1980) defun <- bind_rows(defun,leeMicrodata(a,dise80_98))
 
 deaths80_19 <- defun %>% 
   filter(ca!="Extranjero") %>% 
-  mutate(ca=if_else(ca=="Castilla-La Mancha","Castilla - La Mancha",ca))
+  mutate(ca=if_else(ca=="Castilla-La Mancha","Castilla - La Mancha",ca), 
+         sexo=as.character(sexo))
   
 save(deaths80_19,file="rdata/deaths80_19.rdata")
 ```
@@ -147,12 +148,13 @@ edades <- tibble(e1=seq(0,90,by=5), e2=seq(4,94,by=5)) %>%
 cacodes <- readxl::read_excel("CCAA codes.xlsx") %>% 
   select(codigoCA,ca=CA_INE)
 
-# Download and read week mortality data in 2019 and 2020:
+# Download and read week mortality data from 2019:
 deathData <- pxR::read.px("https://www.ine.es/jaxiT3/files/t/es/px/35179.px?nocab=1") %>% 
   as.data.frame
 
-# Conversion of data to a tidy tibble with age group and autonomous community:
-week2020Deaths <- deathData %>% 
+# Conversion of data to a tidy tibble with age group and autonomous community; for 
+# each ISO week dates of monday, sunday and thursday are computed.
+weekly1921Deaths <- deathData %>% 
   filter(Tipo.de.dato=="Dato base",Sexo!="Total",
            Edad..grupos.quinquenales.!="Todas las edades",
            Comunidades.autónomas!="Total Nacional") %>% 
@@ -161,41 +163,41 @@ week2020Deaths <- deathData %>%
   mutate(numDefun=ifelse(is.na(numDefun),0,numDefun),
          ca=toupper(ca)) %>% 
   filter(!(edad=="No consta"&numDefun==0)) %>% 
-  mutate(semana=paste(gsub("SM","-W",periodo),4,sep="-"),
-         fecha=ISOweek::ISOweek2date(semana),
-         mes=lubridate::month(fecha),
-         año=lubridate::year(fecha),
-         codigoCA=as.numeric(substr(ca,1,2)),
+  mutate(codigoCA=as.numeric(substr(ca,1,2)),
          edad = as.character(edad),
-         sexo=as.character(sexo),
-         año=as.numeric(año)) %>% 
-  select(fecha,año,mes,semana,periodo,edad,sexo,codigoCA,numDefun) %>% 
+         sexo=as.character(sexo)) %>% 
+  select(periodo,edad,sexo,codigoCA,numDefun) %>% 
   full_join(cacodes) %>% 
   full_join(edades) %>% 
-  group_by(periodo,fecha,año,mes,codigoCA,ca,sexo,grEdad) %>%   
+  group_by(periodo,codigoCA,ca,sexo,grEdad) %>%   
   summarize(numDefun=sum(numDefun)) %>% 
-  filter(!is.na(grEdad)&año==2020) %>% 
-  ungroup() 
-
+  filter(!is.na(grEdad)) %>% 
+  mutate(date1=ISOweek::ISOweek2date(paste(gsub("SM","-W",periodo),1,sep="-")),
+         date7=ISOweek::ISOweek2date(paste(gsub("SM","-W",periodo),7,sep="-")),
+         date4=ISOweek::ISOweek2date(paste(gsub("SM","-W",periodo),4,sep="-"))) %>% 
+  ungroup() %>% 
+  arrange(desc(periodo))
+  
 # Group data by month. As INE does not provide data by month, we can follow two 
 # approximations: assign number of deaths in a week to the month in which the 
 # week has more days, or assign number of deaths to each month proportionally to 
 # the number of days of each week into that month.
 
+# First filter deaths of the year 2020. Take into account that ISO weeks are
+# numbered according to the month in which Thursday falls
+week2020Deaths <- weekly1921Deaths %>% 
+  filter(year(date4)==2020) 
+
 # Approx 1: each week is assigned to the month in which there are more days:
-deaths2020A1 <- week2020Deaths %>% 
+deaths2020A1 <- week2020Deaths %>%
+  mutate(año=2020,
+         mes=lubridate::month(date4)) %>% 
   group_by(año,mes,codigoCA,ca,sexo,grEdad) %>% 
   summarize(numDefun=sum(numDefun)) %>% 
   ungroup() 
 
 # Approx 2: Assign number of deaths proportionally to the number of days of
 # month that fall inside each week
-
-week2020Deaths <- week2020Deaths %>% 
-  mutate(date1=ISOweek::ISOweek2date(paste(gsub("SM","-W",periodo),1,sep="-")),
-         date7=ISOweek::ISOweek2date(paste(gsub("SM","-W",periodo),7,sep="-"))) %>% 
-  arrange(fecha,ca,grEdad,sexo) %>% 
-  select(-c(año,mes,fecha,periodo))
 
 # The following function computes how many days of the same week fall in two
 # different months and distribute the number of deaths proportionally:
@@ -213,30 +215,14 @@ ndd <- function(date1,date7,numDefun,...){
 
 # Apply this function to weekly mortality data
 deaths2020A2 <- pmap_dfr(week2020Deaths,ndd)
-deaths2020A2 <- 
-  filter(deaths2020A2,año==2020) %>% 
-  mutate(numDefun=round(nDef)) %>% 
-  select(año,mes,codigoCA,ca,sexo,grEdad,numDefun)
+deaths2020A2 <- deaths2020A2 %>% 
+  filter(año==2020) %>% 
+  group_by(año,mes,codigoCA,ca,sexo,grEdad) %>% 
+  summarize(numDefun=round(sum(nDef))) %>% 
+  ungroup()
+
+save(deaths2020A1,deaths2020A2, file="rdata/deaths2020.rdata")
+save(weekly1921Deaths,file="rdata/weekly1921Deaths.rdata")
 
 ```
-
-
-## Complete mortality data 1980-2020
-
-Finally we join mortality data until 2019 (definitive official data) with 2020 (provisional) data.
-
-```{r}
-deaths80_19 <- deaths80_19 %>% 
-  mutate(sexo=as.character(sexo))
-
-deaths80_20A1 <- bind_rows(deaths80_19,deaths2020A1) %>% 
-  arrange(año,mes,ca)
-
-deaths80_20A2 <- bind_rows(deaths80_19,deaths2020A2) %>% 
-  arrange(año,mes,ca)
-
-
-save(deaths80_20A1,deaths80_20A2,file="rdata/deaths80_20.rdata")
-```
-
 
