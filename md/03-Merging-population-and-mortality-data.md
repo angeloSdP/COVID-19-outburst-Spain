@@ -38,7 +38,7 @@ deathPop8020A2 <- bind_rows(deaths80_19,deaths2020A2)  %>%
 save(deathPop8020A1,deathPop8020A2,file="rdata/deathPop8020.rdata")
 ```
 
-## Mortality during the periodo March 1st - June 30 from 2008 to 2020
+## Mortality during the period March 1st - June 30 from 2008 to 2020
 
 For our analysis we use data of the four-months periods from March 1st -
 June 30 in the years 2008 to 2020.
