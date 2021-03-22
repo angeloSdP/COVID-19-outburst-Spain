@@ -186,7 +186,7 @@ weekly1921Deaths <- deathData %>%
 # First filter deaths of the year 2020. Take into account that ISO weeks are
 # numbered according to the month in which Thursday falls
 week2020Deaths <- weekly1921Deaths %>% 
-  filter(year(date4)==2020) 
+  filter(lubridate::year(date4)==2020) 
 
 # Approx 1: each week is assigned to the month in which there are more days:
 deaths2020A1 <- week2020Deaths %>%
